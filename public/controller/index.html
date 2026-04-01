@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Brawl Arena Controller</title>
+  <link rel="stylesheet" href="/controller/controller.css">
+</head>
+<body>
+  <div id="join-screen">
+    <h1>BRAWL ARENA</h1>
+    <div id="join-form">
+      <input type="text" id="player-name" placeholder="Enter your name" maxlength="12" autocomplete="off">
+      <button id="join-btn">JOIN</button>
+    </div>
+    <p id="join-error"></p>
+  </div>
+
+  <div id="waiting-screen" style="display:none">
+    <h2>Joined!</h2>
+    <p id="team-label"></p>
+    <p class="wait-text">Waiting for other players...</p>
+    <div id="player-counter"></div>
+  </div>
+
+  <div id="select-screen" style="display:none">
+    <h2>SELECT CHARACTER</h2>
+    <div id="select-timer-mobile"></div>
+    <div id="character-grid"></div>
+    <button id="confirm-btn" disabled>CONFIRM</button>
+  </div>
+
+  <div id="game-screen" style="display:none">
+    <div id="mobile-hud">
+      <div id="mobile-health-bar">
+        <div id="mobile-health-fill"></div>
+      </div>
+      <div id="mobile-info">
+        <span id="mobile-score-display"></span>
+        <span id="mobile-timer-display"></span>
+      </div>
+    </div>
+    <canvas id="joystick-canvas"></canvas>
+    <div id="respawn-overlay" style="display:none">
+      <p>ELIMINATED</p>
+      <p id="respawn-timer"></p>
+    </div>
+  </div>
+
+  <div id="gameover-screen" style="display:none">
+    <h1 id="mobile-winner"></h1>
+    <p id="mobile-result"></p>
+    <div id="mobile-stats"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/shared/constants.js"></script>
+  <script src="/shared/utils.js"></script>
+  <script src="/controller/joystick.js"></script>
+  <script src="/controller/character-select.js"></script>
+  <script src="/controller/game-hud.js"></script>
+  <script src="/controller/controller.js"></script>
+</body>
+</html>

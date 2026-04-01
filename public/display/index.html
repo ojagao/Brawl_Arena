@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brawl Arena</title>
+  <link rel="stylesheet" href="/display/display.css">
+</head>
+<body>
+  <div id="lobby-screen">
+    <h1>BRAWL ARENA</h1>
+    <div id="qr-container">
+      <img id="qr-code" alt="QR Code">
+      <p id="join-url"></p>
+    </div>
+    <div id="player-list">
+      <h2>Players <span id="player-count">0/6</span></h2>
+      <div id="teams-container">
+        <div id="team-red" class="team-panel">
+          <h3>RED TEAM</h3>
+          <ul id="red-players"></ul>
+        </div>
+        <div id="team-blue" class="team-panel">
+          <h3>BLUE TEAM</h3>
+          <ul id="blue-players"></ul>
+        </div>
+      </div>
+    </div>
+    <p id="waiting-text">Waiting for players...</p>
+  </div>
+
+  <div id="select-screen" style="display:none">
+    <h2>CHARACTER SELECT</h2>
+    <div id="select-timer"></div>
+    <div id="select-status"></div>
+  </div>
+
+  <canvas id="game-canvas" style="display:none"></canvas>
+  <div id="game-hud" style="display:none">
+    <div id="score-board">
+      <span id="red-score" class="score-red">0</span>
+      <span class="score-divider">-</span>
+      <span id="blue-score" class="score-blue">0</span>
+    </div>
+    <div id="timer-display">2:00</div>
+    <div id="kill-feed"></div>
+  </div>
+
+  <div id="game-over-screen" style="display:none">
+    <h1 id="winner-text"></h1>
+    <div id="final-scores"></div>
+    <div id="player-stats"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/shared/constants.js"></script>
+  <script src="/shared/utils.js"></script>
+  <script src="/display/lobby-screen.js"></script>
+  <script src="/display/renderer.js"></script>
+  <script src="/display/hud.js"></script>
+  <script src="/display/display.js"></script>
+</body>
+</html>
