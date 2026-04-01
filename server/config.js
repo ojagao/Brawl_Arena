@@ -1,11 +1,12 @@
 const CONFIG = Object.freeze({
-  PORT: process.env.PORT || 3000,
+  PORT: process.env.PORT || 3004,
   PUBLIC_URL: process.env.PUBLIC_URL || '',
 
   TICK_RATE: 60,
   TICK_INTERVAL: 1000 / 60,
 
   MAX_PLAYERS: 6,
+  LOBBY_WAIT_TIME: 30000,
   TEAMS: Object.freeze(['red', 'blue']),
   PLAYERS_PER_TEAM: 3,
 

@@ -25,6 +25,8 @@ const LobbyScreen = {
     }
   },
 
+  lobbyTimerId: null,
+
   updatePlayers(players) {
     this.elements.playerCount.textContent = `${players.length}/6`
 
@@ -41,9 +43,27 @@ const LobbyScreen = {
 
     if (players.length >= 6) {
       this.elements.waitingText.textContent = 'All players joined! Starting...'
+    } else if (this.lobbyTimerId) {
+      // timer is running, text updated by startCountdown
     } else {
       this.elements.waitingText.textContent = 'Waiting for players...'
     }
+  },
+
+  startCountdown(seconds) {
+    if (this.lobbyTimerId) clearInterval(this.lobbyTimerId)
+    let remaining = seconds
+    this.elements.waitingText.textContent = `Starting in ${remaining}s (bots will fill empty slots)`
+    this.lobbyTimerId = setInterval(() => {
+      remaining--
+      if (remaining <= 0) {
+        clearInterval(this.lobbyTimerId)
+        this.lobbyTimerId = null
+        this.elements.waitingText.textContent = 'Starting...'
+      } else {
+        this.elements.waitingText.textContent = `Starting in ${remaining}s (bots will fill empty slots)`
+      }
+    }, 1000)
   },
 
   show() {

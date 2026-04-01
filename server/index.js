@@ -66,4 +66,5 @@ server.listen(CONFIG.PORT, () => {
   const ip = getLocalIp()
   console.log(`Server running at http://${ip}:${CONFIG.PORT}`)
   console.log(`Display: http://localhost:${CONFIG.PORT}`)
+  console.log(`DEBUG_MODE: ${CONFIG.DEBUG_MODE}`)
 })

@@ -4,6 +4,9 @@ const { getAllCharacters } = require('../characters/characters')
 const { createGameState } = require('../game/game-state')
 const GameLoop = require('../game/game-loop')
 const CONFIG = require('../config')
+const { createBotPlayers, getBotCharacterSelection } = require('../game/bot')
+
+const roomTimers = new Map()
 
 function setupLobbyHandler(io, activeGames) {
   io.on('connection', (socket) => {
@@ -57,7 +60,51 @@ function handleJoin(socket, io, data, activeGames) {
   })
 
   if (isFull(result.room)) {
+    // 6人揃ったら即開始
+    clearRoomTimer(roomId)
+    fillWithBots(roomId)
     startCharacterSelect(io, roomId, activeGames)
+  } else if (!roomTimers.has(roomId)) {
+    // 最初のプレイヤーが入ったら30秒タイマー開始
+    const remaining = CONFIG.LOBBY_WAIT_TIME / 1000
+    io.to(roomId).emit('lobby:timer', { remaining })
+
+    const timerId = setTimeout(() => {
+      roomTimers.delete(roomId)
+      const room = roomManager.get(roomId)
+      if (!room || room.state !== 'WAITING') return
+
+      fillWithBots(roomId)
+      startCharacterSelect(io, roomId, activeGames)
+    }, CONFIG.LOBBY_WAIT_TIME)
+
+    roomTimers.set(roomId, timerId)
+  }
+}
+
+function clearRoomTimer(roomId) {
+  const timerId = roomTimers.get(roomId)
+  if (timerId) {
+    clearTimeout(timerId)
+    roomTimers.delete(roomId)
+  }
+}
+
+function fillWithBots(roomId) {
+  const room = roomManager.get(roomId)
+  if (!room) return
+
+  const needed = CONFIG.MAX_PLAYERS - room.players.length
+  if (needed <= 0) return
+
+  const bots = createBotPlayers(room.players.length, CONFIG.MAX_PLAYERS)
+  for (const bot of bots) {
+    roomManager.join(roomId, bot)
+  }
+
+  const botSelections = getBotCharacterSelection(bots)
+  for (const [botId, charId] of Object.entries(botSelections)) {
+    roomManager.selectCharacter(roomId, botId, charId)
   }
 }
 

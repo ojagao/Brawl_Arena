@@ -124,6 +124,8 @@ const ControllerApp = {
   },
 
   startGame() {
+    document.getElementById('join-screen').style.display = 'none'
+    document.getElementById('waiting-screen').style.display = 'none'
     document.getElementById('select-screen').style.display = 'none'
     document.getElementById('game-screen').style.display = 'block'
 

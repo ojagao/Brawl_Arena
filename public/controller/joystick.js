@@ -69,7 +69,7 @@ const JoystickController = {
       currentX: x,
       currentY: y,
       angle: 0,
-      force: 0
+      force: 0,
     }
 
     this.touches.set(touch.identifier, stick)
