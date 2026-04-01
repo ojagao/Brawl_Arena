@@ -42,7 +42,9 @@ function movePlayer(player, input, deltaTime, wallRects) {
   if (!player.alive) return player
 
   const character = getCharacter(player.characterId)
-  const speed = character.speed * 60
+  const baseSpeed = character.speed * 60
+  const slowMultiplier = (player.slowUntil && player.slowUntil > 0) ? (1 - (player.slowAmount || 0)) : 1
+  const speed = baseSpeed * slowMultiplier
 
   let vx = 0
   let vy = 0
@@ -97,12 +99,49 @@ function moveProjectile(projectile, deltaTime, wallRects) {
     return null
   }
 
+  const canBounce = (projectile.bounceCount || 0) > 0
+
+  // Map boundary
   if (newX < 0 || newX > CONFIG.MAP_WIDTH || newY < 0 || newY > CONFIG.MAP_HEIGHT) {
+    if (canBounce) {
+      let bvx = projectile.vx
+      let bvy = projectile.vy
+      if (newX < 0 || newX > CONFIG.MAP_WIDTH) bvx = -bvx
+      if (newY < 0 || newY > CONFIG.MAP_HEIGHT) bvy = -bvy
+      return Object.freeze({
+        ...projectile,
+        x: clamp(newX, 4, CONFIG.MAP_WIDTH - 4),
+        y: clamp(newY, 4, CONFIG.MAP_HEIGHT - 4),
+        vx: bvx,
+        vy: bvy,
+        angle: Math.atan2(bvy, bvx),
+        distanceTraveled: distTraveled,
+        bounceCount: projectile.bounceCount - 1
+      })
+    }
     return null
   }
 
   for (const rect of wallRects) {
     if (circleRectCollide(newX, newY, 4, rect.x, rect.y, rect.w, rect.h)) {
+      if (canBounce) {
+        let bvx = projectile.vx
+        let bvy = projectile.vy
+        const cx = rect.x + rect.w / 2
+        const cy = rect.y + rect.h / 2
+        if (Math.abs(projectile.x - cx) > rect.w / 2) bvx = -bvx
+        else bvy = -bvy
+        return Object.freeze({
+          ...projectile,
+          x: projectile.x,
+          y: projectile.y,
+          vx: bvx,
+          vy: bvy,
+          angle: Math.atan2(bvy, bvx),
+          distanceTraveled: distTraveled,
+          bounceCount: projectile.bounceCount - 1
+        })
+      }
       return null
     }
   }

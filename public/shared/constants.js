@@ -26,6 +26,10 @@ const SHARED = Object.freeze({
     healer: { id: 'healer', name: 'Healer', color: '#2ecc71', emoji: '💚' },
     speedster: { id: 'speedster', name: 'Speedster', color: '#f39c12', emoji: '⚡' },
     bomber: { id: 'bomber', name: 'Bomber', color: '#e67e22', emoji: '💣' },
-    shield: { id: 'shield', name: 'Shield', color: '#3498db', emoji: '🛡' }
+    shield: { id: 'shield', name: 'Shield', color: '#3498db', emoji: '🛡' },
+    ninja: { id: 'ninja', name: 'Ninja', color: '#2c3e50', emoji: '🥷' },
+    frost: { id: 'frost', name: 'Frost', color: '#74b9ff', emoji: '❄️' },
+    gunner: { id: 'gunner', name: 'Gunner', color: '#6c7a3a', emoji: '🔫' },
+    mystic: { id: 'mystic', name: 'Mystic', color: '#6c5ce7', emoji: '🔮' }
   })
 })

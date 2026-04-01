@@ -21,7 +21,9 @@ function createPlayerState(player, spawnPoint, characterId) {
     fireCooldown: 0,
     lastDamageTime: 0,
     kills: 0,
-    deaths: 0
+    deaths: 0,
+    slowUntil: 0,
+    slowAmount: 0
   })
 }
 

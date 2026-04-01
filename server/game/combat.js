@@ -1,15 +1,19 @@
 const CONFIG = require('../config')
 const { getCharacter } = require('../characters/characters')
 
-function applyDamage(player, damage, currentTime) {
+function applyDamage(player, damage, currentTime, projectile) {
   const newHealth = Math.max(0, player.health - damage)
+  const slowUpdates = (projectile && projectile.slowEffect)
+    ? { slowUntil: currentTime + projectile.slowDuration, slowAmount: projectile.slowEffect }
+    : {}
   return Object.freeze({
     ...player,
     health: newHealth,
     alive: newHealth > 0,
     lastDamageTime: currentTime,
     deaths: newHealth <= 0 ? player.deaths + 1 : player.deaths,
-    respawnTimer: newHealth <= 0 ? CONFIG.RESPAWN_TIME : player.respawnTimer
+    respawnTimer: newHealth <= 0 ? CONFIG.RESPAWN_TIME : player.respawnTimer,
+    ...slowUpdates
   })
 }
 

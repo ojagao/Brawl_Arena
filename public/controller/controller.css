@@ -137,8 +137,8 @@ body {
 
 #character-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
   width: 100%;
   max-width: 340px;
 }
@@ -147,10 +147,15 @@ body {
   background: rgba(255,255,255,0.08);
   border: 2px solid transparent;
   border-radius: 12px;
-  padding: 12px;
+  padding: 8px 4px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.char-preview {
+  display: block;
+  margin: 0 auto 4px;
 }
 
 .char-card.selected {
@@ -163,26 +168,30 @@ body {
   pointer-events: none;
 }
 
-.char-emoji {
-  font-size: 32px;
-  margin-bottom: 4px;
-}
-
 .char-name {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .char-role {
-  font-size: 11px;
+  font-size: 10px;
   color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.char-stats {
-  font-size: 10px;
-  color: #aaa;
-  margin-top: 4px;
+#radar-chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 200px;
+  margin: 4px auto 0;
+}
+
+#radar-chart {
+  display: block;
 }
 
 #confirm-btn {

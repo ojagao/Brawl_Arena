@@ -21,6 +21,10 @@ function createProjectiles(player, input, gameState) {
     }
 
     const speed = character.projectileSpeed * 60
+    const type = character.explosionRadius ? 'explosive'
+      : character.bounceCount ? 'magic'
+      : 'bullet'
+
     projectiles.push(Object.freeze({
       id: nextId++,
       ownerId: player.id,
@@ -33,8 +37,11 @@ function createProjectiles(player, input, gameState) {
       damage: character.damage,
       range: character.range,
       distanceTraveled: 0,
-      type: character.explosionRadius ? 'explosive' : 'bullet',
-      explosionRadius: character.explosionRadius || 0
+      type,
+      explosionRadius: character.explosionRadius || 0,
+      bounceCount: character.bounceCount || 0,
+      slowEffect: character.slowEffect || 0,
+      slowDuration: character.slowDuration || 0
     }))
   }
 

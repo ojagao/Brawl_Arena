@@ -15,7 +15,8 @@ const LobbyScreen = {
 
   async loadQR(roomId) {
     try {
-      const response = await fetch(`/api/qr/${roomId}`)
+      const origin = window.location.origin
+      const response = await fetch(`/api/qr/${roomId}?origin=${encodeURIComponent(origin)}`)
       const data = await response.json()
       this.elements.qrCode.src = data.qr
       this.elements.joinUrl.textContent = data.url

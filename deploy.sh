@@ -10,63 +10,74 @@ BRANCH="main"
 
 echo "=== Brawl Arena - App Runner Deploy ==="
 
-# Check if service already exists
+# Push latest code to GitHub
+echo "[1/3] Pushing to GitHub..."
+git add -A
+git diff --cached --quiet && echo "  No changes to commit." || \
+  git commit -m "deploy: update for App Runner"
+git push origin main 2>&1 || true
+
+# Create or update App Runner service
+echo "[2/3] App Runner service..."
 EXISTING=$(aws apprunner list-services \
   --profile "$PROFILE" \
   --region "$REGION" \
   --query "ServiceSummaryList[?ServiceName=='${SERVICE_NAME}'].ServiceArn" \
   --output text 2>/dev/null || true)
 
+SOURCE_CONFIG='{
+  "AuthenticationConfiguration": {
+    "ConnectionArn": "'"$CONNECTION_ARN"'"
+  },
+  "AutoDeploymentsEnabled": true,
+  "CodeRepository": {
+    "RepositoryUrl": "'"$REPO_URL"'",
+    "SourceCodeVersion": {
+      "Type": "BRANCH",
+      "Value": "'"$BRANCH"'"
+    },
+    "CodeConfiguration": {
+      "ConfigurationSource": "API",
+      "CodeConfigurationValues": {
+        "Runtime": "NODEJS_22",
+        "BuildCommand": "npm install",
+        "StartCommand": "npm start",
+        "Port": "3000",
+        "RuntimeEnvironmentVariables": {
+          "NODE_ENV": "production"
+        }
+      }
+    }
+  }
+}'
+
 if [ -n "$EXISTING" ] && [ "$EXISTING" != "None" ]; then
-  echo "Service already exists. Triggering redeployment..."
-  aws apprunner start-deployment \
+  echo "  Updating existing service..."
+  SERVICE_ARN="$EXISTING"
+  aws apprunner update-service \
     --profile "$PROFILE" \
     --region "$REGION" \
-    --service-arn "$EXISTING"
-  SERVICE_ARN="$EXISTING"
+    --service-arn "$SERVICE_ARN" \
+    --source-configuration "$SOURCE_CONFIG" > /dev/null
 else
-  echo "Creating new App Runner service..."
+  echo "  Creating new service..."
   SERVICE_ARN=$(aws apprunner create-service \
     --profile "$PROFILE" \
     --region "$REGION" \
     --service-name "$SERVICE_NAME" \
-    --source-configuration '{
-      "AuthenticationConfiguration": {
-        "ConnectionArn": "'"$CONNECTION_ARN"'"
-      },
-      "AutoDeploymentsEnabled": true,
-      "CodeRepository": {
-        "RepositoryUrl": "'"$REPO_URL"'",
-        "SourceCodeVersion": {
-          "Type": "BRANCH",
-          "Value": "'"$BRANCH"'"
-        },
-        "CodeConfiguration": {
-          "ConfigurationSource": "API",
-          "CodeConfigurationValues": {
-            "Runtime": "NODEJS_18",
-            "BuildCommand": "npm install",
-            "StartCommand": "npm start",
-            "Port": "3000",
-            "RuntimeEnvironmentVariables": {
-              "NODE_ENV": "production"
-            }
-          }
-        }
-      }
-    }' \
+    --source-configuration "$SOURCE_CONFIG" \
     --instance-configuration '{
       "Cpu": "0.25 vCPU",
       "Memory": "0.5 GB"
     }' \
     --query 'Service.ServiceArn' \
     --output text)
-
-  echo "Service created: $SERVICE_ARN"
 fi
 
-echo ""
-echo "Waiting for service to be running..."
+echo "  ServiceArn: $SERVICE_ARN"
+
+# Wait for service to be running
+echo "[3/3] Waiting for service..."
 while true; do
   STATUS=$(aws apprunner describe-service \
     --profile "$PROFILE" \
@@ -94,44 +105,14 @@ SERVICE_URL=$(aws apprunner describe-service \
   --query 'Service.ServiceUrl' \
   --output text)
 
-echo ""
-echo "=== Deploy Complete ==="
-echo "URL: https://${SERVICE_URL}"
-echo ""
-echo "Setting PUBLIC_URL environment variable..."
-
+# Set PUBLIC_URL
 aws apprunner update-service \
   --profile "$PROFILE" \
   --region "$REGION" \
   --service-arn "$SERVICE_ARN" \
-  --source-configuration '{
-    "AuthenticationConfiguration": {
-      "ConnectionArn": "'"$CONNECTION_ARN"'"
-    },
-    "AutoDeploymentsEnabled": true,
-    "CodeRepository": {
-      "RepositoryUrl": "'"$REPO_URL"'",
-      "SourceCodeVersion": {
-        "Type": "BRANCH",
-        "Value": "'"$BRANCH"'"
-      },
-      "CodeConfiguration": {
-        "ConfigurationSource": "API",
-        "CodeConfigurationValues": {
-          "Runtime": "NODEJS_18",
-          "BuildCommand": "npm install",
-          "StartCommand": "npm start",
-          "Port": "3000",
-          "RuntimeEnvironmentVariables": {
-            "NODE_ENV": "production",
-            "PUBLIC_URL": "https://'"$SERVICE_URL"'"
-          }
-        }
-      }
-    }
-  }' > /dev/null 2>&1
+  --source-configuration "$(echo "$SOURCE_CONFIG" | sed 's/"NODE_ENV": "production"/"NODE_ENV": "production", "PUBLIC_URL": "https:\/\/'"$SERVICE_URL"'"/')" > /dev/null 2>&1 || true
 
-echo "PUBLIC_URL set to https://${SERVICE_URL}"
 echo ""
-echo "Display:    https://${SERVICE_URL}"
+echo "=== Deploy Complete ==="
+echo "URL: https://${SERVICE_URL}"
 echo "Controller: https://${SERVICE_URL}/control/<roomId>"

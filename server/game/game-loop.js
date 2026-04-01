@@ -142,7 +142,7 @@ class GameLoop {
           allEvents = [...allEvents, ...result.events]
         } else {
           const target = players.get(hitPlayerId)
-          const damaged = applyDamage(target, proj.damage, now)
+          const damaged = applyDamage(target, proj.damage, now, proj)
           players = new Map(players)
           players.set(hitPlayerId, damaged)
 
@@ -167,6 +167,14 @@ class GameLoop {
     players = processRespawns(players, deltaTime, state.map)
     players = processHealthRegen(players, deltaTime, now)
     players = processHealing(players, deltaTime)
+
+    // Expire slow effects
+    for (const [id, player] of players) {
+      if (player.slowUntil && player.slowUntil <= now) {
+        players = new Map(players)
+        players.set(id, Object.freeze({ ...player, slowUntil: 0, slowAmount: 0 }))
+      }
+    }
 
     const newScores = updateScores(state.scores, allEvents)
     const newTimeRemaining = state.timeRemaining - deltaTime * 1000

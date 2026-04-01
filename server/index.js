@@ -33,7 +33,7 @@ app.get('/control/:roomId', (req, res) => {
 
 app.get('/api/qr/:roomId', async (req, res) => {
   try {
-    const baseUrl = CONFIG.PUBLIC_URL || `http://${getLocalIp()}:${CONFIG.PORT}`
+    const baseUrl = req.query.origin || CONFIG.PUBLIC_URL || `http://${getLocalIp()}:${CONFIG.PORT}`
     const url = `${baseUrl}/control/${req.params.roomId}`
     const qrDataUrl = await QRCode.toDataURL(url, {
       width: 300,

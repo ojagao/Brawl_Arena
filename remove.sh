@@ -50,4 +50,3 @@ done
 
 echo ""
 echo "=== Remove Complete ==="
-echo "Service '${SERVICE_NAME}' has been deleted."

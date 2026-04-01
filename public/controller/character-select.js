@@ -12,6 +12,7 @@ const CharacterSelect = {
     this.confirmedId = null
     this.buildGrid()
     this.startTimer(timeLimit)
+    RadarChart.init('radar-chart')
   },
 
   buildGrid() {
@@ -19,18 +20,22 @@ const CharacterSelect = {
     const confirmBtn = document.getElementById('confirm-btn')
 
     grid.innerHTML = this.characters.map(c => {
-      const info = SHARED.CHARACTERS[c.id] || {}
       return `
         <div class="char-card" data-id="${c.id}">
-          <div class="char-emoji">${info.emoji || ''}</div>
+          <canvas class="char-preview" width="56" height="56"></canvas>
           <div class="char-name" style="color:${c.color}">${c.name}</div>
           <div class="char-role">${c.role}</div>
-          <div class="char-stats">HP:${c.health} SPD:${c.speed} DMG:${c.damage}</div>
         </div>
       `
     }).join('')
 
     grid.querySelectorAll('.char-card').forEach(card => {
+      const charId = card.dataset.id
+      const canvas = card.querySelector('.char-preview')
+      if (canvas) {
+        const ctx = canvas.getContext('2d')
+        CharacterSprites.drawPreview(ctx, charId, 28, 28, 44)
+      }
       card.addEventListener('click', () => {
         if (card.classList.contains('taken')) return
         this.selectCharacter(card.dataset.id)
@@ -56,6 +61,13 @@ const CharacterSelect = {
     })
 
     document.getElementById('confirm-btn').disabled = false
+
+    const character = this.characters.find(c => c.id === id)
+    const container = document.getElementById('radar-chart-container')
+    if (character && container) {
+      container.style.display = 'flex'
+      RadarChart.draw(character)
+    }
   },
 
   updateSelections(selections, myId) {

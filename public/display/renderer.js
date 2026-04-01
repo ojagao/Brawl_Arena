@@ -146,13 +146,13 @@ const GameRenderer = {
         continue
       }
 
-      const charInfo = SHARED.CHARACTERS[player.characterId] || {}
       const teamColor = SHARED.TEAM_COLORS[player.team]
       const radius = 18
 
       ctx.save()
       ctx.translate(player.x, player.y)
 
+      // Shadow
       ctx.fillStyle = teamColor
       ctx.globalAlpha = 0.3
       ctx.beginPath()
@@ -160,25 +160,15 @@ const GameRenderer = {
       ctx.fill()
       ctx.globalAlpha = 1
 
-      ctx.fillStyle = charInfo.color || teamColor
-      ctx.beginPath()
-      ctx.arc(0, 0, radius, 0, Math.PI * 2)
-      ctx.fill()
-
+      // Team border ring
       ctx.strokeStyle = teamColor
       ctx.lineWidth = 3
+      ctx.beginPath()
+      ctx.arc(0, 0, radius + 1, 0, Math.PI * 2)
       ctx.stroke()
 
-      ctx.save()
-      ctx.rotate(player.angle)
-      ctx.fillStyle = '#fff'
-      ctx.fillRect(radius - 4, -3, 12, 6)
-      ctx.restore()
-
-      ctx.fillStyle = '#fff'
-      ctx.font = 'bold 10px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText(charInfo.emoji || '', 0, 4)
+      // Character sprite
+      CharacterSprites.draw(ctx, player.characterId, radius, player.angle, player.team)
 
       const healthPercent = player.health / player.maxHealth
       const barWidth = 36
@@ -339,6 +329,18 @@ const GameRenderer = {
         ctx.beginPath()
         ctx.arc(0, 0, 3, 0, Math.PI * 2)
         ctx.fill()
+      } else if (proj.type === 'magic') {
+        ctx.fillStyle = '#6c5ce7'
+        ctx.shadowColor = '#a29bfe'
+        ctx.shadowBlur = 10
+        ctx.beginPath()
+        ctx.arc(0, 0, 5, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = '#fff'
+        ctx.beginPath()
+        ctx.arc(0, 0, 2, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.shadowBlur = 0
       } else {
         ctx.fillStyle = color
         ctx.shadowColor = color

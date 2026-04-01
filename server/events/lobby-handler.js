@@ -83,7 +83,7 @@ function startCharacterSelect(io, roomId, activeGames) {
 }
 
 function assignDefaultCharacters(room, roomId) {
-  const defaults = ['brawler', 'sniper', 'healer', 'speedster', 'bomber', 'shield']
+  const defaults = ['brawler', 'sniper', 'healer', 'speedster', 'bomber', 'shield', 'ninja', 'frost', 'gunner', 'mystic']
   let idx = 0
   for (const player of room.players) {
     if (!room.selections[player.id]) {

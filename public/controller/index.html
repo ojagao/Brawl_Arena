@@ -28,6 +28,9 @@
     <h2>SELECT CHARACTER</h2>
     <div id="select-timer-mobile"></div>
     <div id="character-grid"></div>
+    <div id="radar-chart-container" style="display:none">
+      <canvas id="radar-chart"></canvas>
+    </div>
     <button id="confirm-btn" disabled>CONFIRM</button>
   </div>
 
@@ -57,7 +60,9 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="/shared/constants.js"></script>
   <script src="/shared/utils.js"></script>
+  <script src="/shared/character-sprites.js"></script>
   <script src="/controller/joystick.js"></script>
+  <script src="/controller/radar-chart.js"></script>
   <script src="/controller/character-select.js"></script>
   <script src="/controller/game-hud.js"></script>
   <script src="/controller/controller.js"></script>
