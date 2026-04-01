@@ -1,6 +1,6 @@
 const CONFIG = require('../config')
 const { movePlayer, moveProjectile, checkProjectileHit } = require('./physics')
-const { getWallRects } = require('../maps/maps')
+const { getWallRects, isInBush } = require('../maps/maps')
 const { createProjectiles } = require('./projectile')
 const {
   applyDamage,
@@ -13,6 +13,7 @@ const {
 } = require('./combat')
 const { updatePlayer, serializeGameState, serializePlayerState } = require('./game-state')
 const { getCharacter } = require('../characters/characters')
+const { updateBotInputs } = require('./bot')
 
 class GameLoop {
   constructor(room, io, roomManager, onGameEnd) {
@@ -73,6 +74,8 @@ class GameLoop {
     let state = room.gameState
     let allEvents = []
 
+    updateBotInputs(this, state.players)
+
     let players = state.players
     for (const [id, player] of players) {
       const input = this.inputs.get(id)
@@ -82,10 +85,13 @@ class GameLoop {
     }
 
     let projectiles = []
+    const expiredProjectiles = []
     for (const proj of state.projectiles) {
       const moved = moveProjectile(proj, deltaTime, this.wallRects)
       if (moved) {
         projectiles.push(moved)
+      } else {
+        expiredProjectiles.push(proj)
       }
     }
 
@@ -103,7 +109,11 @@ class GameLoop {
         projectiles = [...projectiles, ...result.projectiles]
         nextProjectileId = result.nextId
         players = new Map(players)
-        players.set(shoot.playerId, Object.freeze({ ...currentPlayer, fireCooldown: result.cooldown }))
+        players.set(shoot.playerId, Object.freeze({
+          ...currentPlayer,
+          fireCooldown: result.cooldown,
+          bushRevealUntil: now + 1000
+        }))
       }
     }
 
@@ -140,11 +150,34 @@ class GameLoop {
           const result = applyExplosionDamage(proj, players, now)
           players = result.players
           allEvents = [...allEvents, ...result.events]
+          allEvents.push({
+            type: 'explosion',
+            x: proj.x,
+            y: proj.y,
+            radius: proj.explosionRadius
+          })
         } else {
           const target = players.get(hitPlayerId)
           const damaged = applyDamage(target, proj.damage, now, proj)
           players = new Map(players)
           players.set(hitPlayerId, damaged)
+
+          allEvents.push({
+            type: 'hit',
+            x: proj.x,
+            y: proj.y,
+            team: proj.team,
+            projectileType: proj.type
+          })
+
+          if (proj.slowEffect) {
+            allEvents.push({
+              type: 'slow',
+              targetId: hitPlayerId,
+              x: target.x,
+              y: target.y
+            })
+          }
 
           if (!damaged.alive) {
             const killer = players.get(proj.ownerId)
@@ -164,6 +197,21 @@ class GameLoop {
       }
     }
 
+    // Projectiles that expired by range or wall collision
+    for (const proj of expiredProjectiles) {
+      if (proj.type === 'explosive') {
+        const result = applyExplosionDamage(proj, players, now)
+        players = result.players
+        allEvents = [...allEvents, ...result.events]
+        allEvents.push({
+          type: 'explosion',
+          x: proj.x,
+          y: proj.y,
+          radius: proj.explosionRadius
+        })
+      }
+    }
+
     players = processRespawns(players, deltaTime, state.map)
     players = processHealthRegen(players, deltaTime, now)
     players = processHealing(players, deltaTime)
@@ -173,6 +221,18 @@ class GameLoop {
       if (player.slowUntil && player.slowUntil <= now) {
         players = new Map(players)
         players.set(id, Object.freeze({ ...player, slowUntil: 0, slowAmount: 0 }))
+      }
+    }
+
+    // Bush visibility check
+    for (const [id, player] of players) {
+      if (!player.alive) continue
+      const onBush = isInBush(state.map, player.x, player.y)
+      const revealed = player.bushRevealUntil > now
+      const newInBush = onBush && !revealed
+      if (player.inBush !== newInBush) {
+        players = new Map(players)
+        players.set(id, Object.freeze({ ...player, inBush: newInBush }))
       }
     }
 
@@ -207,6 +267,15 @@ class GameLoop {
     for (const event of allEvents) {
       if (event.type === 'kill') {
         this.io.to(this.roomId).emit('game:kill', event)
+      }
+    }
+
+    if (allEvents.length > 0) {
+      const effects = allEvents.filter(e =>
+        e.type === 'explosion' || e.type === 'hit' || e.type === 'slow'
+      )
+      if (effects.length > 0) {
+        this.io.to(`display:${this.roomId}`).emit('game:effects', effects)
       }
     }
 

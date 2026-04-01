@@ -23,7 +23,10 @@ function createPlayerState(player, spawnPoint, characterId) {
     kills: 0,
     deaths: 0,
     slowUntil: 0,
-    slowAmount: 0
+    slowAmount: 0,
+    fireRate: character.fireRate,
+    inBush: false,
+    bushRevealUntil: 0
   })
 }
 
@@ -83,7 +86,12 @@ function serializeGameState(state) {
       deaths: player.deaths,
       aiming: player.aiming || false,
       aimAngle: Math.round((player.aimAngle || 0) * 100) / 100,
-      aimRange: player.aimRange || 0
+      aimRange: player.aimRange || 0,
+      slowed: player.slowUntil > 0,
+      fireCooldown: Math.round(player.fireCooldown || 0),
+      fireRate: player.fireRate || 0,
+      inBush: player.inBush || false,
+      bushRevealUntil: player.bushRevealUntil || 0
     })
   }
 

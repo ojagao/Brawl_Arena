@@ -78,6 +78,9 @@ const GameRenderer = {
     this.drawProjectiles(ctx, state.projectiles)
     this.drawPlayers(ctx, state.players)
 
+    EffectSystem.update()
+    EffectSystem.draw(ctx)
+
     ctx.restore()
   },
 
@@ -146,6 +149,8 @@ const GameRenderer = {
         continue
       }
 
+      if (player.inBush) continue
+
       const teamColor = SHARED.TEAM_COLORS[player.team]
       const radius = 18
 
@@ -167,6 +172,16 @@ const GameRenderer = {
       ctx.arc(0, 0, radius + 1, 0, Math.PI * 2)
       ctx.stroke()
 
+      // Slow indicator
+      if (player.slowed) {
+        ctx.globalAlpha = 0.3 + Math.sin(performance.now() / 200) * 0.1
+        ctx.fillStyle = '#74b9ff'
+        ctx.beginPath()
+        ctx.arc(0, 0, radius + 5, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.globalAlpha = 1
+      }
+
       // Character sprite
       CharacterSprites.draw(ctx, player.characterId, radius, player.angle, player.team)
 
@@ -181,10 +196,24 @@ const GameRenderer = {
       ctx.fillStyle = healthPercent > 0.5 ? '#2ecc71' : healthPercent > 0.25 ? '#f39c12' : '#e74c3c'
       ctx.fillRect(-barWidth / 2, barY, barWidth * healthPercent, barHeight)
 
+      // Cooldown gauge
+      if (player.fireCooldown > 0 && player.fireRate > 0) {
+        const cdPercent = player.fireCooldown / player.fireRate
+        const cdBarWidth = 36
+        const cdBarHeight = 3
+        const cdBarY = barY - 8
+
+        ctx.fillStyle = 'rgba(0,0,0,0.4)'
+        ctx.fillRect(-cdBarWidth / 2 - 1, cdBarY - 1, cdBarWidth + 2, cdBarHeight + 2)
+
+        ctx.fillStyle = '#f39c12'
+        ctx.fillRect(-cdBarWidth / 2, cdBarY, cdBarWidth * (1 - cdPercent), cdBarHeight)
+      }
+
       ctx.fillStyle = '#fff'
       ctx.font = 'bold 11px sans-serif'
       ctx.textAlign = 'center'
-      ctx.fillText(player.name, 0, -radius - 16)
+      ctx.fillText(player.name, 0, -radius - 22)
 
       ctx.restore()
     }
@@ -204,7 +233,7 @@ const GameRenderer = {
 
   drawAimLines(ctx, players) {
     for (const player of players) {
-      if (!player.alive || !player.aiming || !player.aimRange) continue
+      if (!player.alive || !player.aiming || !player.aimRange || player.inBush) continue
 
       const teamColor = SHARED.TEAM_COLORS[player.team]
       const range = player.aimRange
@@ -242,10 +271,10 @@ const GameRenderer = {
       ctx.fill()
       ctx.globalAlpha = 1
 
-      // Spread indicator for brawler (multi-shot)
+      // Spread indicators for multi-shot characters
       const charData = SHARED.CHARACTERS[player.characterId]
-      if (charData && player.characterId === 'brawler') {
-        const spreadAngle = Math.PI / 12
+      if (charData && (player.characterId === 'brawler' || player.characterId === 'ninja')) {
+        const spreadAngle = player.characterId === 'brawler' ? Math.PI / 12 : Math.PI / 20
         for (const offset of [-spreadAngle / 2, spreadAngle / 2]) {
           const sAngle = angle + offset
           const sEndX = player.x + Math.cos(sAngle) * range
@@ -277,13 +306,47 @@ const GameRenderer = {
         ctx.globalAlpha = 1
       }
 
+      // Slow range indicator for frost
+      if (player.characterId === 'frost') {
+        ctx.globalAlpha = 0.15
+        ctx.fillStyle = '#74b9ff'
+        ctx.beginPath()
+        ctx.arc(endX, endY, 15, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.globalAlpha = 0.4
+        ctx.strokeStyle = '#74b9ff'
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.arc(endX, endY, 15, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.globalAlpha = 1
+      }
+
+      // Bounce indicator for mystic
+      if (player.characterId === 'mystic') {
+        ctx.globalAlpha = 0.3
+        ctx.fillStyle = '#6c5ce7'
+        ctx.beginPath()
+        ctx.arc(endX, endY, 12, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.globalAlpha = 0.5
+        ctx.strokeStyle = '#a29bfe'
+        ctx.lineWidth = 1.5
+        ctx.setLineDash([3, 3])
+        ctx.beginPath()
+        ctx.arc(endX, endY, 12, 0, Math.PI * 2)
+        ctx.stroke()
+        ctx.setLineDash([])
+        ctx.globalAlpha = 1
+      }
+
       ctx.restore()
     }
   },
 
   drawHealAuras(ctx, players) {
     for (const player of players) {
-      if (!player.alive || player.characterId !== 'healer') continue
+      if (!player.alive || player.characterId !== 'healer' || player.inBush) continue
 
       const healRadius = 100
       const pulse = (Math.sin(performance.now() / 400) + 1) / 2

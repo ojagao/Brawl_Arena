@@ -108,4 +108,11 @@ const MAPS = Object.freeze({
   arena_1: createArenaMap()
 })
 
-module.exports = { MAPS, getWallRects }
+function isInBush(map, x, y) {
+  const col = Math.floor(x / map.tileSize)
+  const row = Math.floor(y / map.tileSize)
+  if (row < 0 || row >= map.height || col < 0 || col >= map.width) return false
+  return map.tiles[row][col] === 2
+}
+
+module.exports = { MAPS, getWallRects, isInBush }
