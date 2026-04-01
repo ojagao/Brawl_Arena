@@ -25,6 +25,10 @@ const DisplayApp = {
       LobbyScreen.updatePlayers(data.players)
     })
 
+    this.socket.on('lobby:timer', (data) => {
+      LobbyScreen.startCountdown(data.remaining)
+    })
+
     this.socket.on('room:player-left', (data) => {
       this.players = data.players
       LobbyScreen.updatePlayers(data.players)
@@ -50,6 +54,12 @@ const DisplayApp = {
       GameRenderer.updateState(data)
       GameHUD.update(data)
       this.players = data.players
+    })
+
+    this.socket.on('game:effects', (effects) => {
+      for (const effect of effects) {
+        EffectSystem.add(effect)
+      }
     })
 
     this.socket.on('game:kill', (event) => {
