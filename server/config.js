@@ -1,6 +1,6 @@
 const CONFIG = Object.freeze({
   PORT: process.env.PORT || 3000,
-  PUBLIC_URL: 'https://e4f9c664a220.ngrok.app',
+  PUBLIC_URL: process.env.PUBLIC_URL || '',
 
   TICK_RATE: 60,
   TICK_INTERVAL: 1000 / 60,
