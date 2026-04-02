@@ -196,9 +196,10 @@ const GameRenderer = {
       ctx.fillStyle = healthPercent > 0.5 ? '#2ecc71' : healthPercent > 0.25 ? '#f39c12' : '#e74c3c'
       ctx.fillRect(-barWidth / 2, barY, barWidth * healthPercent, barHeight)
 
-      // Cooldown gauge
-      if (player.fireCooldown > 0 && player.fireRate > 0) {
+      // Cooldown gauge (always visible)
+      if (player.fireRate > 0) {
         const cdPercent = player.fireCooldown / player.fireRate
+        const readyPercent = 1 - cdPercent
         const cdBarWidth = 36
         const cdBarHeight = 3
         const cdBarY = barY - 8
@@ -206,8 +207,8 @@ const GameRenderer = {
         ctx.fillStyle = 'rgba(0,0,0,0.4)'
         ctx.fillRect(-cdBarWidth / 2 - 1, cdBarY - 1, cdBarWidth + 2, cdBarHeight + 2)
 
-        ctx.fillStyle = '#f39c12'
-        ctx.fillRect(-cdBarWidth / 2, cdBarY, cdBarWidth * (1 - cdPercent), cdBarHeight)
+        ctx.fillStyle = readyPercent >= 1 ? '#3498db' : '#f39c12'
+        ctx.fillRect(-cdBarWidth / 2, cdBarY, cdBarWidth * readyPercent, cdBarHeight)
       }
 
       ctx.fillStyle = '#fff'
@@ -379,11 +380,13 @@ const GameRenderer = {
   drawProjectiles(ctx, projectiles) {
     for (const proj of projectiles) {
       const color = SHARED.TEAM_COLORS[proj.team] || '#fff'
+      const charId = proj.characterId
 
       ctx.save()
       ctx.translate(proj.x, proj.y)
 
       if (proj.type === 'explosive') {
+        // Bomber: glowing bomb
         ctx.fillStyle = '#f39c12'
         ctx.beginPath()
         ctx.arc(0, 0, 6, 0, Math.PI * 2)
@@ -392,10 +395,18 @@ const GameRenderer = {
         ctx.beginPath()
         ctx.arc(0, 0, 3, 0, Math.PI * 2)
         ctx.fill()
+        // Fuse trail
+        ctx.globalAlpha = 0.4
+        ctx.fillStyle = '#888'
+        ctx.beginPath()
+        ctx.arc(-Math.cos(proj.angle) * 8, -Math.sin(proj.angle) * 8, 3, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.globalAlpha = 1
       } else if (proj.type === 'magic') {
+        // Mystic: glowing orb with trail
         ctx.fillStyle = '#6c5ce7'
         ctx.shadowColor = '#a29bfe'
-        ctx.shadowBlur = 10
+        ctx.shadowBlur = 12
         ctx.beginPath()
         ctx.arc(0, 0, 5, 0, Math.PI * 2)
         ctx.fill()
@@ -404,7 +415,99 @@ const GameRenderer = {
         ctx.arc(0, 0, 2, 0, Math.PI * 2)
         ctx.fill()
         ctx.shadowBlur = 0
+        // Magic trail
+        ctx.globalAlpha = 0.3
+        ctx.fillStyle = '#a29bfe'
+        for (let t = 1; t <= 3; t++) {
+          ctx.beginPath()
+          ctx.arc(-Math.cos(proj.angle) * t * 6, -Math.sin(proj.angle) * t * 6, 3 - t * 0.5, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.globalAlpha = 1
+      } else if (charId === 'sniper') {
+        // Sniper: elongated tracer
+        ctx.rotate(proj.angle)
+        ctx.fillStyle = '#9b59b6'
+        ctx.shadowColor = '#9b59b6'
+        ctx.shadowBlur = 8
+        ctx.fillRect(-10, -1.5, 20, 3)
+        ctx.fillStyle = '#fff'
+        ctx.fillRect(-4, -1, 8, 2)
+        ctx.shadowBlur = 0
+      } else if (charId === 'ninja') {
+        // Ninja: spinning shuriken
+        const spin = performance.now() / 50
+        ctx.rotate(spin)
+        ctx.fillStyle = '#2c3e50'
+        ctx.beginPath()
+        for (let i = 0; i < 4; i++) {
+          const a = (Math.PI / 2) * i
+          ctx.moveTo(0, 0)
+          ctx.lineTo(Math.cos(a) * 5, Math.sin(a) * 5)
+          ctx.lineTo(Math.cos(a + 0.5) * 3, Math.sin(a + 0.5) * 3)
+        }
+        ctx.fill()
+        ctx.fillStyle = '#95a5a6'
+        ctx.beginPath()
+        ctx.arc(0, 0, 1.5, 0, Math.PI * 2)
+        ctx.fill()
+      } else if (charId === 'frost') {
+        // Frost: icy projectile with trail
+        ctx.fillStyle = '#74b9ff'
+        ctx.shadowColor = '#74b9ff'
+        ctx.shadowBlur = 8
+        ctx.beginPath()
+        ctx.arc(0, 0, 4, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = '#dfe6e9'
+        ctx.beginPath()
+        ctx.arc(0, 0, 2, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.shadowBlur = 0
+        // Ice trail
+        ctx.globalAlpha = 0.3
+        ctx.fillStyle = '#a8d8ea'
+        for (let t = 1; t <= 3; t++) {
+          ctx.beginPath()
+          ctx.arc(-Math.cos(proj.angle) * t * 5, -Math.sin(proj.angle) * t * 5, 2.5 - t * 0.5, 0, Math.PI * 2)
+          ctx.fill()
+        }
+        ctx.globalAlpha = 1
+      } else if (charId === 'gunner') {
+        // Gunner: small rapid tracer
+        ctx.rotate(proj.angle)
+        ctx.fillStyle = '#ff0'
+        ctx.shadowColor = '#f39c12'
+        ctx.shadowBlur = 4
+        ctx.fillRect(-6, -1, 12, 2)
+        ctx.shadowBlur = 0
+      } else if (charId === 'shield') {
+        // Shield: heavy blunt projectile
+        ctx.fillStyle = '#3498db'
+        ctx.shadowColor = '#3498db'
+        ctx.shadowBlur = 6
+        ctx.beginPath()
+        ctx.arc(0, 0, 5, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.fillStyle = '#fff'
+        ctx.globalAlpha = 0.5
+        ctx.beginPath()
+        ctx.arc(-1, -1, 2, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.globalAlpha = 1
+        ctx.shadowBlur = 0
+      } else if (charId === 'speedster') {
+        // Speedster: fast streak
+        ctx.rotate(proj.angle)
+        ctx.fillStyle = '#f39c12'
+        ctx.shadowColor = '#f39c12'
+        ctx.shadowBlur = 6
+        ctx.fillRect(-8, -1.5, 16, 3)
+        ctx.fillStyle = '#fff'
+        ctx.fillRect(-3, -0.5, 6, 1)
+        ctx.shadowBlur = 0
       } else {
+        // Default bullet
         ctx.fillStyle = color
         ctx.shadowColor = color
         ctx.shadowBlur = 6

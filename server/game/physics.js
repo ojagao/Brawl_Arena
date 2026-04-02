@@ -116,7 +116,8 @@ function moveProjectile(projectile, deltaTime, wallRects) {
         vy: bvy,
         angle: Math.atan2(bvy, bvx),
         distanceTraveled: distTraveled,
-        bounceCount: projectile.bounceCount - 1
+        bounceCount: projectile.bounceCount - 1,
+        justBounced: true
       })
     }
     return null
@@ -139,7 +140,8 @@ function moveProjectile(projectile, deltaTime, wallRects) {
           vy: bvy,
           angle: Math.atan2(bvy, bvx),
           distanceTraveled: distTraveled,
-          bounceCount: projectile.bounceCount - 1
+          bounceCount: projectile.bounceCount - 1,
+          justBounced: true
         })
       }
       return null

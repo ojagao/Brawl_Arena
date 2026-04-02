@@ -89,7 +89,16 @@ class GameLoop {
     for (const proj of state.projectiles) {
       const moved = moveProjectile(proj, deltaTime, this.wallRects)
       if (moved) {
-        projectiles.push(moved)
+        if (moved.justBounced) {
+          allEvents.push({
+            type: 'bounce',
+            x: moved.x,
+            y: moved.y
+          })
+          projectiles.push(Object.freeze({ ...moved, justBounced: false }))
+        } else {
+          projectiles.push(moved)
+        }
       } else {
         expiredProjectiles.push(proj)
       }
@@ -167,7 +176,8 @@ class GameLoop {
             x: proj.x,
             y: proj.y,
             team: proj.team,
-            projectileType: proj.type
+            projectileType: proj.type,
+            characterId: proj.characterId
           })
 
           if (proj.slowEffect) {
@@ -176,6 +186,11 @@ class GameLoop {
               targetId: hitPlayerId,
               x: target.x,
               y: target.y
+            })
+            allEvents.push({
+              type: 'frost_impact',
+              x: proj.x,
+              y: proj.y
             })
           }
 
@@ -208,6 +223,13 @@ class GameLoop {
           x: proj.x,
           y: proj.y,
           radius: proj.explosionRadius
+        })
+      }
+      if (proj.slowEffect) {
+        allEvents.push({
+          type: 'frost_impact',
+          x: proj.x,
+          y: proj.y
         })
       }
     }
@@ -272,7 +294,7 @@ class GameLoop {
 
     if (allEvents.length > 0) {
       const effects = allEvents.filter(e =>
-        e.type === 'explosion' || e.type === 'hit' || e.type === 'slow'
+        e.type === 'explosion' || e.type === 'hit' || e.type === 'slow' || e.type === 'frost_impact' || e.type === 'bounce'
       )
       if (effects.length > 0) {
         this.io.to(`display:${this.roomId}`).emit('game:effects', effects)

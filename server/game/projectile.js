@@ -41,7 +41,8 @@ function createProjectiles(player, input, gameState) {
       explosionRadius: character.explosionRadius || 0,
       bounceCount: character.bounceCount || 0,
       slowEffect: character.slowEffect || 0,
-      slowDuration: character.slowDuration || 0
+      slowDuration: character.slowDuration || 0,
+      characterId: player.characterId
     }))
   }
 

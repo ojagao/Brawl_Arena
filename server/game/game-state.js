@@ -104,7 +104,8 @@ function serializeGameState(state) {
       y: Math.round(p.y * 10) / 10,
       angle: Math.round(p.angle * 100) / 100,
       type: p.type,
-      team: p.team
+      team: p.team,
+      characterId: p.characterId
     })),
     scores: state.scores,
     timeRemaining: Math.round(state.timeRemaining),
